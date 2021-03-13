@@ -1,9 +1,35 @@
+const jwt=require("jsonwebtoken")
 const { JWT_SECRET } = require("../secrets"); // use this secret!
 
-const restricted = (req, res, next) => {
+const roles=require('../../data/db-config')
+
+
+function restricted  (roles)  {
+
+  return async (req,res,next)=>{
+    try{
+const token=req.headers.authorization
+if(!token){
+  return res.status(401).json({
+    msg:"Invalid Credentials"
+  })
+}
+  jwt.verify(token,"Keep it secret , if you want safety",(err,decoded)=>{
+    if(err){
+      return res.status(401).json({msg:"Invalid credential"})
+    }
+
+    if(roles && roles.roles.indexOf(decoded.roles)<roles.indexOf(roles)){
+      return res.status(403).json({ msg:"you shall not pass"})
+    }
+    req.token=decoded
+    next()
+  })
+    }catch(error){next(error)}
+  }
   /*
     If the user does not provide a token in the Authorization header:
-    status 401
+    status 401 if(!token)
     {
       "message": "Token required"
     }
